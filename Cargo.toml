@@ -1,0 +1,10 @@
+[package]
+name = "bima-rs"
+version = "0.1.0"
+edition = "2024"
+authors = ["Muhammad Ali Syaifudin (muhammad.ali.syaifudin@hotmail.com)"]
+description = "N-body simulation"
+license = "GPL 3.0"
+repository = ""
+
+[dependencies]
