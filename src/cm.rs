@@ -9,7 +9,7 @@ pub struct CM {
 pub struct ZeroMass;
 
 impl CM {
-    pub fn from_bodies(bodies: &Vec<Body>) -> Result<Self, ZeroMass> {
+    pub fn from_bodies(bodies: &[Body]) -> Result<Self, ZeroMass> {
         let m_total = bodies.iter().fold(0., |acc, e| acc + e.m);
         if m_total == 0.0 {
             return Err(ZeroMass);

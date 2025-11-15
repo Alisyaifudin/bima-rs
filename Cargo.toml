@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Muhammad Ali Syaifudin (muhammad.ali.syaifudin@hotmail.com)"]
 description = "N-body simulation"
-license = "GPL 3.0"
-repository = ""
+license = "GPL-3.0"
+repository = "https://github.com/Alisyaifudin/bima-rs"
+keywords = ["nbody", "simulation"]
+readme = "README.md"
 
 [dependencies]
