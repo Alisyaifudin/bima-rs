@@ -1,6 +1,6 @@
 [package]
 name = "bima-rs"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 authors = ["Muhammad Ali Syaifudin (muhammad.ali.syaifudin@hotmail.com)"]
 description = "N-body simulation"
@@ -10,3 +10,5 @@ keywords = ["nbody", "simulation"]
 readme = "README.md"
 
 [dependencies]
+may = "0.3.51"
+
