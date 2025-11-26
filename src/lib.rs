@@ -1,12 +1,9 @@
 pub mod integrator;
-pub mod timestep;
-pub mod close_encounter;
 pub mod system;
 pub mod vec3;
 pub mod vec6;
 pub mod record;
 pub mod cm;
-pub mod effect;
 pub mod force;
 pub mod energy;
 pub mod body;

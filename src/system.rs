@@ -1,23 +1,17 @@
 use crate::body::Body;
-use crate::close_encounter::CloseEncounter;
-use crate::force::{self, ForceMethod};
-use crate::integrator::Integrator;
-use crate::timestep::{self, TimestepMethod};
-use crate::vec3::Vec3;
+use crate::force::Force;
+use crate::integrator::{Integrator, Solution};
 use may::coroutine::{self, JoinHandle};
 use may::sync::mpsc::{self, Receiver};
-use std::collections::HashMap;
 use std::sync::mpsc::SendError;
+use std::usize;
 
 #[derive(Clone, Debug)]
-pub struct System {
+pub struct System<F: Force + Send + 'static, I: Integrator<F> + Send + 'static> {
     pub t: f64,
-    pub bodies: Vec<Body>,
-    pub force_method: ForceMethod,
-    pub integrator: Integrator,
-    pub timestep_method: TimestepMethod,
-    pub close_encounter: CloseEncounter,
-    pub cache: HashMap<(usize, usize), Vec3>,
+    pub force: F,
+    pub integrator: I,
+    buff: Vec<Solution>,
 }
 
 pub struct Data {
@@ -36,71 +30,77 @@ impl Data {
     }
 }
 
-impl System {
-    pub fn new(
-        t: f64,
-        bodies: Vec<Body>,
-        force_method: ForceMethod,
-        solve_method: Integrator,
-        timestep_method: TimestepMethod,
-        close_encounter: CloseEncounter,
-    ) -> Self {
-        let mut system = System {
-            t,
-            bodies,
-            force_method,
-            integrator: solve_method,
-            timestep_method,
-            close_encounter,
-            cache: HashMap::new(),
+impl<F: Force + Send + 'static, I: Send + Integrator<F> + 'static> System<F, I> {
+    pub fn new(force: F, integrator: I) -> Self {
+        let n = force.bodies().len();
+        let system = Self {
+            t: 0.,
+            force,
+            buff: vec![Solution::empty(); n],
+            integrator,
         };
-        for i in 0..system.bodies.len() {
-            system.bodies[i].a = force::calc(
-                &system.bodies[i],
-                &system.bodies,
-                &system.force_method,
-                &system.close_encounter,
-                Some(&mut system.cache),
-            );
-        }
         system
-    }
-    pub fn clear_cache(&mut self) {
-        self.cache.clear();
     }
     pub fn integrate(
         mut self,
         t_stop: f64,
+        chunk: Option<usize>,
     ) -> (Receiver<Data>, JoinHandle<Result<(), SendError<Data>>>) {
         let (tx, rx) = mpsc::channel::<Data>();
         let handle: JoinHandle<Result<(), SendError<Data>>> = unsafe {
             coroutine::spawn(move || {
-                match self.timestep_method {
-                    TimestepMethod::Constant(dt) => {
-                        if dt <= 0.0 {
-                            return Ok(());
-                        }
-                        let mut tmp = Vec::new();
-                        let mut store = true;
-                        while self.t < t_stop {
-                            let percentage = self.t / t_stop;
-                            let bodies = if store {
-                                Some(self.bodies.clone())
-                            } else {
-                                None
-                            };
-                            let data = Data::new(bodies, percentage, self.t);
-                            tx.send(data)?;
-                            let proceed = timestep::constant_step(&mut self, dt, &mut tmp);
-                            if proceed {
-                                store = true;
-                                self.t += dt;
-                            } else {
-                                store = false;
-                            }
-                        }
+                let mut it = 0;
+                let total_chunk = chunk.unwrap_or(usize::MAX);
+                while self.t <= t_stop && it < total_chunk {
+                    // eprintln!("=========================== 0");
+                    // // send the last position
+                    let (calc_force, send) = self.integrator.pre();
+                    if calc_force {
+                        self.force.all();
                     }
-                };
+                    // eprintln!("=========================== 1");
+                    let percentage = self.t / t_stop;
+                    let bodies = if send {
+                        it += 1;
+                        Some(self.force.bodies().clone())
+                    } else {
+                        None
+                    };
+                    // eprintln!("=========================== 2");
+                    let data = Data::new(bodies, percentage, self.t);
+                    tx.send(data)?;
+                    // eprintln!("=========================== 3");
+                    // calculate next position
+                    self.buff.iter_mut().enumerate().for_each(|(i, dummy)| {
+                        let body = self.force.body(i);
+                        let sol =
+                            self.integrator
+                                .call(body.id, body.a, body.to_vec6(), &self.force);
+                        *dummy = sol;
+                    });
+                    // eprintln!("=========================== 4");
+                    // update current position and get min dt
+                    let dt_min = self
+                        .force
+                        .bodies_mut()
+                        .iter_mut()
+                        .enumerate()
+                        .map(|(i, body)| {
+                            body.v = self.buff[i].v;
+                            body.r = self.buff[i].r;
+                            self.buff[i].dt
+                        })
+                        .reduce(f64::min);
+                    // set new dt
+                    // eprintln!("=========================== 5");
+                    self.integrator
+                        .set_dt(dt_min.unwrap_or(self.integrator.dt()));
+                    let update = self.integrator.post();
+                    if update {
+                        self.t += self.integrator.dt();
+                    }
+                    // eprintln!("=========================== 6");
+                }
                 Ok(())
             })
         };

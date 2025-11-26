@@ -3,12 +3,12 @@ use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Vec3(f64, f64, f64);
 
-pub const ZERO_VEC3: Vec3 = Vec3(0.0, 0.0, 0.0);
-pub const ONE_VEC3: Vec3 = Vec3(1.0, 1.0, 1.0);
+pub const ZERO: Vec3 = Vec3(0.0, 0.0, 0.0);
+pub const ONE: Vec3 = Vec3(1.0, 1.0, 1.0);
 
 impl Default for Vec3 {
     fn default() -> Self {
-        ZERO_VEC3
+        ZERO
     }
 }
 

@@ -1,5 +1,5 @@
+use crate::vec3::{self, Vec3};
 use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
-use crate::vec3::{ONE_VEC3, Vec3, ZERO_VEC3};
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Vec6 {
@@ -7,19 +7,19 @@ pub struct Vec6 {
     pub v: Vec3,
 }
 
-pub const ZERO_VEC6: Vec6 = Vec6 {
-    r: ZERO_VEC3,
-    v: ZERO_VEC3,
+pub const ZERO: Vec6 = Vec6 {
+    r: vec3::ZERO,
+    v: vec3::ZERO,
 };
 
-pub const ONE_VEC6: Vec6 = Vec6 {
-    r: ONE_VEC3,
-    v: ONE_VEC3,
+pub const ONE: Vec6 = Vec6 {
+    r: vec3::ONE,
+    v: vec3::ONE,
 };
 
 impl Default for Vec6 {
     fn default() -> Self {
-        ZERO_VEC6
+        ZERO
     }
 }
 
@@ -64,27 +64,27 @@ impl Vec6 {
     }
     pub fn rel_err(&self, other: &Self) -> f64 {
         let diff = *self - *other;
-        let mut max = (diff.x() / other.x()).abs() ;
+        let mut max = (diff.x() / other.x()).abs();
         let y_err = (diff.y() / other.y()).abs();
         if max < y_err {
             max = y_err;
-        } 
+        }
         let z_err = (diff.z() / other.z()).abs();
         if max < z_err {
             max = z_err;
-        } 
+        }
         let vx_err = (diff.vx() / other.vx()).abs();
         if max < vx_err {
             max = vx_err
-        } 
+        }
         let vy_err = (diff.vy() / other.vy()).abs();
         if max < vy_err {
             max = vy_err;
-        } 
+        }
         let vz_err = (diff.vz() / other.vz()).abs();
         if max < vz_err {
             max = vz_err;
-        } 
+        }
         max
     }
 }

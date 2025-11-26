@@ -1,4 +1,4 @@
-use crate::{vec3::{Vec3, ZERO_VEC3}, vec6::Vec6};
+use crate::{vec3::{Vec3, ZERO}, vec6::Vec6};
 
 
 #[derive(Clone, Debug, Default)]
@@ -17,16 +17,16 @@ impl Body {
             m,
             r,
             v,
-            a: a.unwrap_or(ZERO_VEC3),
+            a: a.unwrap_or(ZERO),
         }
     }
     pub fn empty() -> Self {
         Body {
             id: 0,
             m: 0.,
-            r: ZERO_VEC3,
-            v: ZERO_VEC3,
-            a: ZERO_VEC3,
+            r: ZERO,
+            v: ZERO,
+            a: ZERO,
         }
     }
     pub fn from_vec6(w: Vec6, id: usize, m: f64) -> Self {
@@ -35,7 +35,7 @@ impl Body {
         m,
         r: w.r,
         v: w.v,
-        a: ZERO_VEC3
+        a: ZERO
       }
     }
     pub fn to_vec6(&self) -> Vec6 {

@@ -1,29 +1,54 @@
 use crate::body::Body;
-use crate::vec3::{Vec3, ZERO_VEC3};
+use crate::vec3::{Vec3, ZERO};
 
-pub struct CM(Vec3);
-
-pub struct ZeroMass;
+#[derive(Debug, Clone)]
+pub struct CM {
+    pub r: Vec3,
+    pub m: f64,
+}
 
 impl CM {
-    pub fn r(&self) -> Vec3 {
-        self.0
+    pub fn zero() -> Self {
+        CM { r: ZERO, m: 0. }
     }
-    pub fn from_bodies(bodies: &[Body]) -> Result<Self, ZeroMass> {
-        let m_total = bodies.iter().fold(0., |acc, e| acc + e.m);
-        if m_total == 0.0 {
-            return Err(ZeroMass);
+    pub fn from_bodies(bodies: &[Body], n_active: usize) -> Self {
+        if bodies.len() == 0 || n_active > bodies.len() {
+            return CM::zero();
         }
-        let r = bodies.iter().fold(ZERO_VEC3, |acc, e| e.m * e.r + acc) / m_total;
-        Ok(CM(r))
+        let m_total =
+            bodies.iter().enumerate().fold(
+                0.,
+                |acc, (i, e)| {
+                    if i >= n_active { acc } else { acc + e.m }
+                },
+            );
+        let r = bodies.iter().fold(ZERO, |acc, e| e.m * e.r + acc) / m_total;
+        CM { r, m: m_total }
+    }
+    pub fn extend_one(&mut self, body: &Body) {
+        let m_total = body.m + self.m;
+        let r_new = self.r * self.m + body.r * body.m;
+        *self = CM {
+            r: r_new / m_total,
+            m: m_total,
+        };
+    }
+    pub fn extend(&mut self, bodies: &[Body], n_active: usize) {
+        let cm = CM::from_bodies(bodies, n_active);
+        let m_total = cm.m + self.m;
+        let r_new = self.r * self.m + cm.r * cm.m;
+        *self = CM {
+            r: r_new / m_total,
+            m: m_total,
+        };
     }
     pub fn x(&self) -> f64 {
-        self.0.x()
+        self.r.x()
     }
     pub fn y(&self) -> f64 {
-        self.0.y()
+        self.r.y()
     }
     pub fn z(&self) -> f64 {
-        self.0.z()
+        self.r.z()
     }
 }
