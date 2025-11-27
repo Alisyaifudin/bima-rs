@@ -56,8 +56,12 @@ impl Force for Direct {
     fn with_bodies(&self, bodies: Vec<Body>, n_active: usize) -> Direct {
         Direct::new(self.s, bodies, n_active)
     }
-    fn bodies_mut(&mut self) -> &mut Vec<Body> {
-        &mut self.bodies
+    fn len(&self) -> usize {
+        self.bodies.len()
+    }
+    fn set_body(&mut self, id: usize, r: Vec3, v: Vec3) {
+        self.bodies[id].r = r;
+        self.bodies[id].v = v;
     }
     fn bodies(&self) -> &Vec<Body> {
         &self.bodies
@@ -68,6 +72,7 @@ impl Force for Direct {
     fn cm(&self) -> &CM {
         &self.cm
     }
+
     // parallelization is only the best when not doing triangluar calculation (double counting tho)
     fn all(&mut self) {
         let n_total = self.bodies.len();

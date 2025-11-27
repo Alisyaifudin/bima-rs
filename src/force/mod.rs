@@ -11,8 +11,9 @@ pub enum Method {
 
 pub trait Force {
     fn with_bodies(&self, bodies: Vec<Body>, n_active: usize) -> Self;
+    fn len(&self) -> usize;
     fn bodies(&self) -> &Vec<Body>;
-    fn bodies_mut(&mut self) -> &mut Vec<Body>;
+    fn set_body(&mut self, id: usize, r: Vec3, v: Vec3);
     fn body(&self, id: usize) -> &Body;
     fn cm(&self) -> &CM;
     fn all(&mut self);
